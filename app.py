@@ -1,126 +1,207 @@
-
 import streamlit as st
+import streamlit_hotkeys as hotkeys
 from collections import Counter, defaultdict, deque
+import random
 
-# =========================================================
-# NEUROCHASE — HUMAN INTELLIGENCE VS ARTIFICIAL INTELLIGENCE
-# Complete Streamlit game | Python 3.12+
-# =========================================================
+# ============================================================
+# NEUROCHASE
+# HUMAN INTELLIGENCE VS ARTIFICIAL INTELLIGENCE
+# ============================================================
 
 st.set_page_config(
-    page_title="NEUROCHASE | Adaptive AI Maze",
+    page_title="NEUROCHASE - Adaptive AI Game",
     page_icon="🧠",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
-# ------------------------- DESIGN -------------------------
+# ============================================================
+# CSS
+# ============================================================
 
-st.markdown("""
-<style>
-.stApp {
-    background:
-        radial-gradient(ellipse at top left, #172554 0%, transparent 42%),
-        radial-gradient(ellipse at bottom right, #3b0764 0%, transparent 40%),
-        #070b18;
-    color: #f1f5f9;
-}
-h1, h2, h3, p, label {
-    color: #f1f5f9 !important;
-}
-.hero {
-    padding: 24px;
-    border: 1px solid #334155;
-    border-radius: 20px;
-    text-align: center;
-    background: linear-gradient(120deg, #111c3d, #30105a, #082f49);
-    margin-bottom: 18px;
-}
-.hero h1 {
-    color: #67e8f9 !important;
-    font-size: 42px;
-    margin-bottom: 4px;
-    text-shadow: 0 0 18px #06b6d4;
-}
-.hero p { color: #c4b5fd !important; }
-.stat {
-    background: linear-gradient(135deg, #111827, #172554);
-    border: 1px solid #475569;
-    border-radius: 14px;
-    padding: 14px;
-    text-align: center;
-    margin-bottom: 8px;
-}
-.stat-label {
-    font-size: 12px;
-    color: #94a3b8;
-    letter-spacing: 1px;
-}
-.stat-value {
-    font-size: 25px;
-    font-weight: 800;
-    color: #67e8f9;
-}
-.maze {
-    display: grid;
-    grid-template-columns: repeat(15, minmax(0, 1fr));
-    gap: 3px;
-    padding: 12px;
-    background: #050816;
-    border: 2px solid #334155;
-    border-radius: 15px;
-    box-shadow: 0 0 24px #312e8155;
-}
-.cell {
-    aspect-ratio: 1 / 1;
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    font-size: clamp(9px, 2vw, 19px);
-    font-weight: bold;
-}
-.wall {
-    background: linear-gradient(135deg, #4338ca, #164e63);
-    border: 1px solid #6366f1;
-}
-.path { background: #111827; }
-.pellet { color: #facc15; text-shadow: 0 0 8px #facc15; }
-.player {
-    background: #064e3b;
-    color: #6ee7b7;
-    box-shadow: 0 0 12px #10b981;
-}
-.enemy {
-    background: #4c0519;
-    color: #fda4af;
-    box-shadow: 0 0 12px #f43f5e;
-}
-.panel {
-    border: 1px solid #334155;
-    border-radius: 14px;
-    padding: 16px;
-    background: #111827cc;
-    margin-bottom: 12px;
-}
-div.stButton > button {
-    border: 1px solid #6366f1;
-    border-radius: 12px;
-    min-height: 43px;
-    background: linear-gradient(135deg, #312e81, #164e63);
-    color: white;
-    font-weight: bold;
-}
-div.stButton > button:hover {
-    border-color: #67e8f9;
-    color: #67e8f9;
-}
-</style>
-""", unsafe_allow_html=True)
+st.markdown(
+    """
+    <style>
 
-# ------------------------- MAZE --------------------------
-# # = wall; . = walkable space
+    .stApp {
+        background:
+            radial-gradient(circle at 10% 10%, #172554 0%, transparent 35%),
+            radial-gradient(circle at 90% 90%, #3b0764 0%, transparent 35%),
+            #050816;
+        color: white;
+    }
+
+    .hero {
+        padding: 24px;
+        border-radius: 22px;
+        text-align: center;
+        margin-bottom: 18px;
+        background: linear-gradient(
+            135deg,
+            #111827,
+            #312e81,
+            #164e63,
+            #4c1d95
+        );
+        border: 2px solid #6366f1;
+        box-shadow: 0 0 30px #4f46e555;
+    }
+
+    .hero h1 {
+        color: #67e8f9 !important;
+        font-size: 44px;
+        font-weight: 900;
+        margin-bottom: 5px;
+        text-shadow: 0 0 20px #06b6d4;
+    }
+
+    .hero p {
+        color: #c4b5fd !important;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 2px;
+    }
+
+    .stat {
+        background: linear-gradient(135deg, #111827, #172554);
+        border: 1px solid #475569;
+        border-radius: 15px;
+        padding: 12px;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    .stat-label {
+        font-size: 11px;
+        color: #94a3b8;
+        letter-spacing: 1px;
+        font-weight: 700;
+    }
+
+    .stat-value {
+        font-size: 23px;
+        font-weight: 900;
+        color: #67e8f9;
+    }
+
+    .panel {
+        border: 1px solid #334155;
+        border-radius: 16px;
+        padding: 17px;
+        background: rgba(17, 24, 39, 0.88);
+        margin-bottom: 13px;
+    }
+
+    .panel-title {
+        color: #67e8f9;
+        font-size: 20px;
+        font-weight: 800;
+        margin-bottom: 8px;
+    }
+
+    .prediction {
+        color: #facc15;
+        font-size: 27px;
+        font-weight: 900;
+        text-align: center;
+        padding: 10px;
+    }
+
+    .maze {
+        display: grid;
+        grid-template-columns: repeat(15, minmax(0, 1fr));
+        gap: 3px;
+        padding: 12px;
+        border-radius: 17px;
+        background: #020617;
+        border: 2px solid #4338ca;
+        box-shadow:
+            0 0 20px rgba(99, 102, 241, 0.35),
+            inset 0 0 25px rgba(30, 41, 59, 0.8);
+    }
+
+    .cell {
+        aspect-ratio: 1 / 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 5px;
+        font-size: clamp(8px, 2vw, 18px);
+        font-weight: 900;
+    }
+
+    .wall {
+        background: linear-gradient(135deg, #3730a3, #164e63);
+        border: 1px solid #6366f1;
+        color: #a5b4fc;
+    }
+
+    .path {
+        background: #0f172a;
+    }
+
+    .pellet {
+        color: #facc15;
+        text-shadow: 0 0 9px #facc15;
+        font-size: 21px;
+    }
+
+    .player {
+        background: radial-gradient(circle, #065f46, #064e3b);
+        color: #fde047;
+        box-shadow: 0 0 15px #10b981;
+        border: 1px solid #34d399;
+    }
+
+    .enemy {
+        background: radial-gradient(circle, #881337, #4c0519);
+        color: #fb7185;
+        box-shadow: 0 0 15px #f43f5e;
+        border: 1px solid #fb7185;
+    }
+
+    .exit {
+        background: radial-gradient(circle, #854d0e, #713f12);
+        color: #fde047;
+        border: 2px solid #facc15;
+        box-shadow: 0 0 18px #facc15;
+        font-size: clamp(9px, 2vw, 20px);
+    }
+
+    .keyboard {
+        text-align: center;
+        padding: 13px;
+        border-radius: 13px;
+        background: #111827;
+        border: 1px solid #334155;
+        margin-top: 12px;
+        color: #c4b5fd;
+        font-weight: 700;
+    }
+
+    div.stButton > button {
+        border: 1px solid #6366f1;
+        border-radius: 12px;
+        min-height: 43px;
+        background: linear-gradient(135deg, #312e81, #164e63);
+        color: white;
+        font-weight: 800;
+    }
+
+    div.stButton > button:hover {
+        border-color: #67e8f9;
+        color: #67e8f9;
+        box-shadow: 0 0 12px #06b6d455;
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# ============================================================
+# MAZE
+# ============================================================
 
 MAZE = [
     "###############",
@@ -142,6 +223,9 @@ COLS = len(MAZE[0])
 PLAYER_START = (1, 1)
 ENEMY_START = (9, 13)
 
+# EXIT FOR EVERY ROUND
+EXIT_POSITION = (9, 13)
+
 DIRECTIONS = {
     "UP": (-1, 0),
     "DOWN": (1, 0),
@@ -150,455 +234,1077 @@ DIRECTIONS = {
 }
 
 ARROWS = {
-    "UP": "⬆️",
-    "DOWN": "⬇️",
-    "LEFT": "⬅️",
-    "RIGHT": "➡️",
+    "UP": "⬆️ UP",
+    "DOWN": "⬇️ DOWN",
+    "LEFT": "⬅️ LEFT",
+    "RIGHT": "➡️ RIGHT",
 }
 
-# ---------------------- GAME LOGIC -----------------------
+# ============================================================
+# BASIC FUNCTIONS
+# ============================================================
 
 def is_walkable(position):
     row, col = position
-    return (
-        0 <= row < ROWS
-        and 0 <= col < COLS
-        and MAZE[row][col] != "#"
-    )
+
+    if row < 0 or row >= ROWS:
+        return False
+
+    if col < 0 or col >= COLS:
+        return False
+
+    return MAZE[row][col] != "#"
 
 
 def create_pellets():
-    """Create pellets on every walkable maze cell."""
+    """
+    Create pellets on walkable cells.
+
+    The EXIT is not given a pellet so that it remains
+    clearly visible to the player.
+    """
+
     pellets = set()
 
     for row in range(ROWS):
         for col in range(COLS):
-            if MAZE[row][col] != "#":
-                pellets.add((row, col))
 
-    pellets.discard(PLAYER_START)
-    pellets.discard(ENEMY_START)
+            position = (row, col)
+
+            if MAZE[row][col] != "#":
+                if position != PLAYER_START:
+                    if position != EXIT_POSITION:
+                        pellets.add(position)
+
     return pellets
 
 
 def get_neighbors(position):
+
     row, col = position
+
     neighbors = []
 
-    for direction, (dr, dc) in DIRECTIONS.items():
-        candidate = (row + dr, col + dc)
+    for direction, movement in DIRECTIONS.items():
 
-        if is_walkable(candidate):
-            neighbors.append((candidate, direction))
+        dr, dc = movement
+
+        new_position = (
+            row + dr,
+            col + dc
+        )
+
+        if is_walkable(new_position):
+
+            neighbors.append(
+                (new_position, direction)
+            )
 
     return neighbors
 
 
+# ============================================================
+# BFS PATHFINDING
+# ============================================================
+
 def shortest_path_step(start, target):
-    """Return the first step along a shortest path using BFS."""
+
     if start == target:
         return start
 
-    queue = deque([(start, None)])
+    queue = deque()
+
+    queue.append(
+        (start, None)
+    )
+
     visited = {start}
 
     while queue:
+
         current, first_step = queue.popleft()
 
-        for neighbor, _ in get_neighbors(current):
+        for neighbor, direction in get_neighbors(current):
+
             if neighbor in visited:
                 continue
 
-            next_first_step = (
-                neighbor if first_step is None else first_step
-            )
+            if first_step is None:
+                next_first_step = neighbor
+            else:
+                next_first_step = first_step
 
             if neighbor == target:
+
                 return next_first_step
 
             visited.add(neighbor)
-            queue.append((neighbor, next_first_step))
+
+            queue.append(
+                (neighbor, next_first_step)
+            )
 
     return start
 
 
-def predict_next_direction(history, transition_counts):
-    """
-    Learn from the player's previous two moves.
-    Fall back to the most frequent observed move.
-    """
+# ============================================================
+# AI LEARNING
+# ============================================================
+
+def predict_next_direction():
+
+    history = st.session_state.move_history
+
+    transitions = st.session_state.transition_counts
+
+    # Learn from the previous two moves.
+
     if len(history) >= 2:
-        context = tuple(history[-2:])
-        options = transition_counts.get(context, Counter())
+
+        context = (
+            history[-2],
+            history[-1]
+        )
+
+        options = transitions.get(
+            context,
+            Counter()
+        )
 
         if options:
+
             return options.most_common(1)[0][0]
 
+    # If there isn't enough sequence data,
+    # use the most common movement.
+
     if history:
+
         counts = Counter(history)
+
         return counts.most_common(1)[0][0]
 
     return None
 
 
+# ============================================================
+# INITIALIZE GAME
+# ============================================================
+
 def initialize_game():
-    """Initialize every state variable used by the game."""
+
     st.session_state.player = PLAYER_START
+
     st.session_state.enemy = ENEMY_START
+
     st.session_state.pellets = create_pellets()
 
     st.session_state.score = 0
+
     st.session_state.lives = 3
+
     st.session_state.round = 1
 
     st.session_state.move_history = []
+
     st.session_state.transition_counts = defaultdict(Counter)
 
     st.session_state.last_prediction = None
+
     st.session_state.predictions_total = 0
+
     st.session_state.predictions_correct = 0
+
     st.session_state.last_move = "NONE"
-    st.session_state.last_ai_action = "Waiting for movement"
+
+    st.session_state.last_ai_action = (
+        "Waiting for your first move..."
+    )
+
+    st.session_state.message = (
+        "Find the 🚪 EXIT before the AI catches you!"
+    )
 
     st.session_state.game_over = False
+
     st.session_state.won = False
-    st.session_state.message = "Collect the glowing pellets and avoid the AI!"
 
     st.session_state.initialized = True
 
 
-def move_enemy():
-    """The AI predicts the player's next position and chases it."""
-    player = st.session_state.player
-    enemy = st.session_state.enemy
-    history = st.session_state.move_history
-    counts = st.session_state.transition_counts
-    round_number = st.session_state.round
+# ============================================================
+# ROUND COMPLETION
+# ============================================================
 
-    prediction = predict_next_direction(history, counts)
+def complete_round():
 
-    # Aim one step ahead when the predicted step is valid.
-    target = player
+    current_round = st.session_state.round
 
-    if prediction in DIRECTIONS:
-        dr, dc = DIRECTIONS[prediction]
-        predicted_position = (player[0] + dr, player[1] + dc)
+    # FINAL ROUND
+    if current_round >= 5:
 
-        if is_walkable(predicted_position):
-            target = predicted_position
-
-    # AI gets increasingly better at chasing in later rounds.
-    # Round 1: 20%, Round 2: 40%, ... Round 5: 100%.
-    prediction_chance = round_number * 0.20
-
-    import random
-
-    if prediction and random.random() < prediction_chance:
-        target_position = target
-        st.session_state.last_ai_action = (
-            f"🧠 Predictive chase toward {prediction}"
-        )
-    else:
-        target_position = player
-        st.session_state.last_ai_action = "🔎 Tracking your current position"
-
-    next_position = shortest_path_step(enemy, target_position)
-
-    # If the AI is already at its target, take a legal step closer
-    # to the player, if possible.
-    if next_position == enemy:
-        next_position = shortest_path_step(enemy, player)
-
-    st.session_state.enemy = next_position
-
-
-def advance_round_if_needed():
-    """Start the next round when all pellets have been collected."""
-    if st.session_state.pellets:
-        return
-
-    if st.session_state.round >= 5:
         st.session_state.won = True
+
         st.session_state.message = (
-            "🏆 You defeated the adaptive AI across all five rounds!"
+            "🏆 VICTORY! "
+            "You escaped all 5 rounds and defeated the AI!"
         )
+
         return
 
+    # NEXT ROUND
     st.session_state.round += 1
+
     st.session_state.player = PLAYER_START
+
     st.session_state.enemy = ENEMY_START
+
     st.session_state.pellets = create_pellets()
 
+    st.session_state.last_prediction = None
+
     st.session_state.message = (
-        f"⚡ Round {st.session_state.round} started! "
-        "The AI is now more predictive."
+        f"🚪 EXIT FOUND! "
+        f"ROUND {st.session_state.round} STARTED! "
+        f"The AI is now smarter."
     )
 
 
+# ============================================================
+# COLLISION
+# ============================================================
+
 def check_collision():
-    """Remove one life when the enemy catches the player."""
+
     if st.session_state.player != st.session_state.enemy:
         return
 
     st.session_state.lives -= 1
 
     if st.session_state.lives <= 0:
+
         st.session_state.lives = 0
+
         st.session_state.game_over = True
+
         st.session_state.message = (
-            "💀 GAME OVER! The AI caught you. Try a new strategy!"
-        )
-    else:
-        st.session_state.player = PLAYER_START
-        st.session_state.enemy = ENEMY_START
-        st.session_state.message = (
-            f"💥 The AI caught you! "
-            f"{st.session_state.lives} life/lives remaining."
+            "💀 GAME OVER! "
+            "The AI learned your movement pattern."
         )
 
+    else:
+
+        st.session_state.player = PLAYER_START
+
+        st.session_state.enemy = ENEMY_START
+
+        st.session_state.message = (
+            "💥 CAUGHT BY THE AI! "
+            f"You have {st.session_state.lives} lives left."
+        )
+
+
+# ============================================================
+# AI MOVEMENT
+# ============================================================
+
+def move_enemy():
+
+    player = st.session_state.player
+
+    enemy = st.session_state.enemy
+
+    prediction = predict_next_direction()
+
+    round_number = st.session_state.round
+
+    # AI gets smarter every round.
+
+    prediction_probability = round_number * 0.20
+
+    predicted_target = player
+
+    if prediction in DIRECTIONS:
+
+        dr, dc = DIRECTIONS[prediction]
+
+        predicted_position = (
+            player[0] + dr,
+            player[1] + dc
+        )
+
+        if is_walkable(predicted_position):
+
+            predicted_target = predicted_position
+
+    if (
+        prediction is not None
+        and random.random() < prediction_probability
+    ):
+
+        target = predicted_target
+
+        st.session_state.last_ai_action = (
+            "🧠 AI is predicting your next move: "
+            f"{ARROWS[prediction]}"
+        )
+
+    else:
+
+        target = player
+
+        st.session_state.last_ai_action = (
+            "👁️ AI is tracking your current position"
+        )
+
+    new_enemy_position = shortest_path_step(
+        enemy,
+        target
+    )
+
+    st.session_state.enemy = new_enemy_position
+
+
+# ============================================================
+# PLAYER MOVEMENT
+# ============================================================
 
 def move_player(direction):
-    """Move the player, update AI learning, then move the enemy."""
-    if st.session_state.game_over or st.session_state.won:
+
+    if st.session_state.game_over:
+        return
+
+    if st.session_state.won:
         return
 
     if direction not in DIRECTIONS:
         return
 
-    dr, dc = DIRECTIONS[direction]
-    current = st.session_state.player
-    candidate = (current[0] + dr, current[1] + dc)
+    # Check the previous AI prediction.
 
-    # A wall blocks movement.
-    if not is_walkable(candidate):
-        st.session_state.message = "🧱 A wall blocks your way!"
-        return
-
-    # Score the AI's previous prediction against the actual move.
-    previous_prediction = st.session_state.last_prediction
+    previous_prediction = (
+        st.session_state.last_prediction
+    )
 
     if previous_prediction is not None:
+
         st.session_state.predictions_total += 1
 
         if previous_prediction == direction:
+
             st.session_state.predictions_correct += 1
 
-    # Learn which move follows the previous two moves.
+    # Learn movement sequence.
+
     history = st.session_state.move_history
 
     if len(history) >= 2:
-        context = tuple(history[-2:])
-        st.session_state.transition_counts[context][direction] += 1
+
+        context = (
+            history[-2],
+            history[-1]
+        )
+
+        st.session_state.transition_counts[
+            context
+        ][direction] += 1
 
     history.append(direction)
 
-    # Keep history bounded while retaining enough recent context.
     if len(history) > 1000:
+
         del history[:200]
 
-    st.session_state.player = candidate
-    st.session_state.last_move = direction
+    # Calculate player movement.
 
-    # Collect a pellet.
-    if candidate in st.session_state.pellets:
-        st.session_state.pellets.remove(candidate)
-        st.session_state.score += 10
+    row, col = st.session_state.player
 
-    # Store the AI's prediction for the player's next move.
-    st.session_state.last_prediction = predict_next_direction(
-        history, st.session_state.transition_counts
+    dr, dc = DIRECTIONS[direction]
+
+    new_position = (
+        row + dr,
+        col + dc
     )
 
-    advance_round_if_needed()
+    # Wall collision.
 
-    if st.session_state.won:
+    if not is_walkable(new_position):
+
+        st.session_state.message = (
+            "🧱 WALL! Choose another direction."
+        )
+
         return
 
+    # Move player.
+
+    st.session_state.player = new_position
+
+    st.session_state.last_move = direction
+
+    # Collect pellet.
+
+    if new_position in st.session_state.pellets:
+
+        st.session_state.pellets.remove(
+            new_position
+        )
+
+        st.session_state.score += 10
+
+        st.session_state.message = (
+            "⭐ Pellet collected! +10 points"
+        )
+
+    # ========================================================
+    # CHECK EXIT
+    # ========================================================
+
+    if new_position == EXIT_POSITION:
+
+        # Bonus for reaching exit.
+
+        st.session_state.score += 100
+
+        complete_round()
+
+        return
+
+    # AI prediction for next move.
+
+    st.session_state.last_prediction = (
+        predict_next_direction()
+    )
+
+    # AI movement.
+
     move_enemy()
+
+    # Collision check.
+
     check_collision()
 
-# --------------------- INITIALIZATION --------------------
 
-if not st.session_state.get("initialized", False):
+# ============================================================
+# INITIALIZE
+# ============================================================
+
+if not st.session_state.get(
+    "initialized",
+    False
+):
+
     initialize_game()
 
-# -------------------------- HEADER -----------------------
 
-st.markdown("""
-<div class="hero">
-    <h1>🧠 NEUROCHASE</h1>
-    <p>HUMAN INTELLIGENCE vs ARTIFICIAL INTELLIGENCE</p>
-    <div>⚡ THINK FAST &nbsp; • &nbsp; 🌀 CHANGE YOUR STRATEGY
-    &nbsp; • &nbsp; 🤖 OUTSMART THE AI</div>
-</div>
-""", unsafe_allow_html=True)
+# ============================================================
+# KEYBOARD CONTROLS
+# ============================================================
+# Arrow keys:
+#
+# ↑ ArrowUp
+# ↓ ArrowDown
+# ← ArrowLeft
+# → ArrowRight
+#
+# prevent_default stops the browser from scrolling.
+# ============================================================
 
-# ---------------------- GAME STATUS ----------------------
+hotkeys.activate(
+    [
+        hotkeys.hk(
+            "move_up",
+            "ArrowUp",
+            prevent_default=True,
+            ignore_repeat=True,
+            help="Move Up"
+        ),
+
+        hotkeys.hk(
+            "move_down",
+            "ArrowDown",
+            prevent_default=True,
+            ignore_repeat=True,
+            help="Move Down"
+        ),
+
+        hotkeys.hk(
+            "move_left",
+            "ArrowLeft",
+            prevent_default=True,
+            ignore_repeat=True,
+            help="Move Left"
+        ),
+
+        hotkeys.hk(
+            "move_right",
+            "ArrowRight",
+            prevent_default=True,
+            ignore_repeat=True,
+            help="Move Right"
+        ),
+    ],
+    key="neurochase_controls"
+)
+
+
+# ============================================================
+# PROCESS KEYBOARD INPUT
+# ============================================================
+
+if hotkeys.pressed(
+    "move_up",
+    key="neurochase_controls"
+):
+
+    move_player("UP")
+
+    st.rerun()
+
+
+if hotkeys.pressed(
+    "move_down",
+    key="neurochase_controls"
+):
+
+    move_player("DOWN")
+
+    st.rerun()
+
+
+if hotkeys.pressed(
+    "move_left",
+    key="neurochase_controls"
+):
+
+    move_player("LEFT")
+
+    st.rerun()
+
+
+if hotkeys.pressed(
+    "move_right",
+    key="neurochase_controls"
+):
+
+    move_player("RIGHT")
+
+    st.rerun()
+
+
+# ============================================================
+# HEADER
+# ============================================================
+
+st.markdown(
+    """
+    <div class="hero">
+
+        <h1>🧠 NEUROCHASE</h1>
+
+        <p>
+            HUMAN INTELLIGENCE VS ARTIFICIAL INTELLIGENCE
+        </p>
+
+        <div>
+            ⚡ THINK FAST
+            &nbsp; • &nbsp;
+            🌀 CHANGE YOUR STRATEGY
+            &nbsp; • &nbsp;
+            🤖 OUTSMART THE AI
+        </div>
+
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+
+# ============================================================
+# STATUS MESSAGE
+# ============================================================
 
 if st.session_state.game_over:
-    st.error(
-        f"💀 GAME OVER — Final score: {st.session_state.score}. "
-        "Press Restart Game to play again."
-    )
-elif st.session_state.won:
-    st.success(
-        f"🏆 VICTORY! You completed all 5 rounds! "
-        f"Final score: {st.session_state.score}."
-    )
-else:
-    st.info(st.session_state.message)
 
-accuracy = (
-    100 * st.session_state.predictions_correct
-    / st.session_state.predictions_total
-    if st.session_state.predictions_total
-    else 0
-)
+    st.error(
+        f"💀 GAME OVER! "
+        f"Final Score: {st.session_state.score}"
+    )
+
+elif st.session_state.won:
+
+    st.success(
+        f"🏆 NEUROCHASE MASTER! "
+        f"Final Score: {st.session_state.score}"
+    )
+
+else:
+
+    st.info(
+        st.session_state.message
+    )
+
+
+# ============================================================
+# STATISTICS
+# ============================================================
+
+if st.session_state.predictions_total > 0:
+
+    accuracy = (
+        st.session_state.predictions_correct
+        /
+        st.session_state.predictions_total
+        * 100
+    )
+
+else:
+
+    accuracy = 0
+
 
 stats = st.columns(5)
 
-stat_values = [
-    ("SCORE", st.session_state.score),
-    ("LIVES", "❤️ " * st.session_state.lives or "💔"),
-    ("ROUND", f"{st.session_state.round}/5"),
-    ("PELLETS LEFT", len(st.session_state.pellets)),
-    ("AI ACCURACY", f"{accuracy:.0f}%"),
+stat_data = [
+
+    (
+        "SCORE",
+        str(st.session_state.score)
+    ),
+
+    (
+        "LIVES",
+        "❤️ " * st.session_state.lives
+    ),
+
+    (
+        "ROUND",
+        f"{st.session_state.round}/5"
+    ),
+
+    (
+        "PELLETS",
+        str(len(st.session_state.pellets))
+    ),
+
+    (
+        "AI ACCURACY",
+        f"{accuracy:.0f}%"
+    ),
 ]
 
-for column, (label, value) in zip(stats, stat_values):
+
+for column, (label, value) in zip(
+    stats,
+    stat_data
+):
+
     column.markdown(
         f"""
         <div class="stat">
-            <div class="stat-label">{label}</div>
-            <div class="stat-value">{value}</div>
+
+            <div class="stat-label">
+                {label}
+            </div>
+
+            <div class="stat-value">
+                {value}
+            </div>
+
         </div>
         """,
-        unsafe_allow_html=True,
+        unsafe_allow_html=True
     )
 
-# ----------------------- MAIN LAYOUT ---------------------
 
-game_column, ai_column = st.columns([1.8, 1])
+# ============================================================
+# MAIN GAME
+# ============================================================
+
+game_column, ai_column = st.columns(
+    [1.8, 1]
+)
+
+
+# ============================================================
+# MAZE DISPLAY
+# ============================================================
 
 with game_column:
-    st.subheader("🎮 THE NEON MAZE")
 
-    # Render the maze as an HTML grid.
-    # All positions are checked against the fixed maze.
+    st.subheader(
+        f"🎮 ROUND {st.session_state.round} — FIND THE EXIT"
+    )
+
     cells = []
 
     for row in range(ROWS):
+
         for col in range(COLS):
-            position = (row, col)
+
+            position = (
+                row,
+                col
+            )
+
+            # WALL
 
             if MAZE[row][col] == "#":
-                cells.append('<div class="cell wall">◆</div>')
-            elif position == st.session_state.player:
-                cells.append('<div class="cell player">🟡</div>')
-            elif position == st.session_state.enemy:
-                cells.append('<div class="cell enemy">🤖</div>')
-            elif position in st.session_state.pellets:
-                cells.append('<div class="cell path pellet">•</div>')
+
+                cells.append(
+                    '<div class="cell wall">◆</div>'
+                )
+
+            # EXIT
+
+            elif position == EXIT_POSITION:
+
+                cells.append(
+                    '<div class="cell exit">🚪</div>'
+                )
+
+            # PLAYER
+
+            elif (
+                position
+                ==
+                st.session_state.player
+            ):
+
+                cells.append(
+                    '<div class="cell player">🟡</div>'
+                )
+
+            # AI
+
+            elif (
+                position
+                ==
+                st.session_state.enemy
+            ):
+
+                cells.append(
+                    '<div class="cell enemy">🤖</div>'
+                )
+
+            # PELLET
+
+            elif (
+                position
+                in
+                st.session_state.pellets
+            ):
+
+                cells.append(
+                    '<div class="cell path pellet">•</div>'
+                )
+
+            # EMPTY
+
             else:
-                cells.append('<div class="cell path"></div>')
+
+                cells.append(
+                    '<div class="cell path"></div>'
+                )
+
 
     st.markdown(
-        '<div class="maze">' + "".join(cells) + '</div>',
-        unsafe_allow_html=True,
+        '<div class="maze">'
+        + "".join(cells)
+        + '</div>',
+        unsafe_allow_html=True
     )
+
+
+    st.markdown(
+        """
+        <div class="keyboard">
+
+            ⌨️ <b>KEYBOARD CONTROLS ENABLED</b>
+
+            <br><br>
+
+            Use
+            <b>⬆️ UP</b>,
+            <b>⬇️ DOWN</b>,
+            <b>⬅️ LEFT</b>
+            and
+            <b>➡️ RIGHT</b>
+            arrow keys.
+
+            <br><br>
+
+            🚪 <b>Reach the EXIT to finish the round!</b>
+
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 
     st.caption(
-        "🟡 You  |  🤖 Adaptive AI  |  🟡 • Pellets  |  "
-        "🔷 Walls"
+        "🟡 YOU  |  🤖 AI  |  ⭐ PELLET  |  "
+        "🚪 EXIT  |  🔷 WALL"
     )
 
-    st.subheader("🕹️ MOVEMENT CONTROLS")
 
-    # Button controls work on desktop and mobile.
-    # Streamlit reruns the script when a button is clicked.
-    control_top = st.columns([1, 1, 1])
+# ============================================================
+# BACKUP BUTTON CONTROLS
+# ============================================================
 
-    with control_top[1]:
-        if st.button("⬆️ UP", use_container_width=True):
+    st.subheader(
+        "🕹️ BACKUP CONTROLS"
+    )
+
+    top_buttons = st.columns(3)
+
+    with top_buttons[1]:
+
+        if st.button(
+            "⬆️ UP",
+            use_container_width=True
+        ):
+
             move_player("UP")
+
             st.rerun()
 
-    control_middle = st.columns([1, 1, 1])
 
-    with control_middle[0]:
-        if st.button("⬅️ LEFT", use_container_width=True):
+    middle_buttons = st.columns(3)
+
+    with middle_buttons[0]:
+
+        if st.button(
+            "⬅️ LEFT",
+            use_container_width=True
+        ):
+
             move_player("LEFT")
+
             st.rerun()
 
-    with control_middle[1]:
-        if st.button("⬇️ DOWN", use_container_width=True):
+
+    with middle_buttons[1]:
+
+        if st.button(
+            "⬇️ DOWN",
+            use_container_width=True
+        ):
+
             move_player("DOWN")
+
             st.rerun()
 
-    with control_middle[2]:
-        if st.button("➡️ RIGHT", use_container_width=True):
+
+    with middle_buttons[2]:
+
+        if st.button(
+            "➡️ RIGHT",
+            use_container_width=True
+        ):
+
             move_player("RIGHT")
+
             st.rerun()
 
-    if st.button("🔄 RESTART GAME", use_container_width=True):
+
+    st.write("")
+
+
+    if st.button(
+        "🔄 RESTART GAME",
+        use_container_width=True
+    ):
+
         initialize_game()
+
         st.rerun()
 
-with ai_column:
-    st.subheader("🧠 AI BRAIN")
 
-    prediction = st.session_state.last_prediction
+# ============================================================
+# AI BRAIN
+# ============================================================
+
+with ai_column:
+
+    st.subheader(
+        "🧠 AI BRAIN"
+    )
+
+
+    prediction = (
+        st.session_state.last_prediction
+    )
+
 
     if prediction:
-        prediction_text = f"{ARROWS[prediction]} {prediction}"
+
+        prediction_text = ARROWS[prediction]
+
     else:
-        prediction_text = "Learning your moves..."
+
+        prediction_text = (
+            "Learning..."
+        )
+
 
     st.markdown(
         f"""
         <div class="panel">
-            <h3>🔮 Next-Move Prediction</h3>
-            <div style="font-size:25px;color:#67e8f9;font-weight:800;">
+
+            <div class="panel-title">
+                🔮 NEXT-MOVE PREDICTION
+            </div>
+
+            <div class="prediction">
                 {prediction_text}
             </div>
-            <p>The AI learns from the sequence of your moves.</p>
+
+            <p>
+                The AI studies the sequence of
+                your previous movements.
+            </p>
+
         </div>
         """,
-        unsafe_allow_html=True,
+        unsafe_allow_html=True
     )
+
 
     st.markdown(
         f"""
         <div class="panel">
-            <h3>🤖 AI Status</h3>
-            <p>{st.session_state.last_ai_action}</p>
-            <p><b>Difficulty:</b> Round {st.session_state.round} of 5</p>
-            <p><b>Moves observed:</b> {len(st.session_state.move_history)}</p>
-            <p><b>Predictions evaluated:</b>
-            {st.session_state.predictions_total}</p>
-            <p><b>Correct predictions:</b>
-            {st.session_state.predictions_correct}</p>
+
+            <div class="panel-title">
+                🤖 AI STATUS
+            </div>
+
+            <p>
+                {st.session_state.last_ai_action}
+            </p>
+
+            <p>
+                <b>Round:</b>
+                {st.session_state.round}/5
+            </p>
+
+            <p>
+                <b>Moves learned:</b>
+                {len(st.session_state.move_history)}
+            </p>
+
+            <p>
+                <b>Predictions tested:</b>
+                {st.session_state.predictions_total}
+            </p>
+
+            <p>
+                <b>Correct predictions:</b>
+                {st.session_state.predictions_correct}
+            </p>
+
         </div>
         """,
-        unsafe_allow_html=True,
+        unsafe_allow_html=True
     )
 
-    st.markdown("""
-    <div class="panel">
-        <h3>⚙️ HOW TO PLAY</h3>
-        <p>1. Use the four direction buttons to move.</p>
-        <p>2. Collect pellets to earn 10 points each.</p>
-        <p>3. Avoid the AI enemy.</p>
-        <p>4. You have only 3 lives.</p>
-        <p>5. Complete all 5 rounds to win.</p>
-        <p>6. Change your movement patterns to confuse the AI.</p>
-    </div>
-    """, unsafe_allow_html=True)
+
+    st.markdown(
+        """
+        <div class="panel">
+
+            <div class="panel-title">
+                🚪 ROUND OBJECTIVE
+            </div>
+
+            <p>
+                Find the glowing
+                <b>🚪 EXIT</b>
+                before the AI catches you.
+            </p>
+
+            <p>
+                ⭐ Pellets give
+                <b>+10 points</b>.
+            </p>
+
+            <p>
+                🚪 Reaching the exit gives
+                <b>+100 points</b>.
+            </p>
+
+            <p>
+                Completing the exit in
+                Round 5 means
+                <b>VICTORY!</b>
+            </p>
+
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+    st.markdown(
+        """
+        <div class="panel">
+
+            <div class="panel-title">
+                ⚙️ HOW TO PLAY
+            </div>
+
+            <p>
+                1️⃣ Move using the arrow keys.
+            </p>
+
+            <p>
+                2️⃣ Collect ⭐ pellets.
+            </p>
+
+            <p>
+                3️⃣ Avoid the 🤖 AI.
+            </p>
+
+            <p>
+                4️⃣ You have ❤️ 3 lives.
+            </p>
+
+            <p>
+                5️⃣ Find 🚪 the exit.
+            </p>
+
+            <p>
+                6️⃣ Complete all 5 rounds.
+            </p>
+
+            <p>
+                7️⃣ Change your movement pattern
+                to confuse the AI.
+            </p>
+
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+# ============================================================
+# FOOTER
+# ============================================================
 
 st.markdown("---")
+
 st.markdown(
-    "<p style='text-align:center;color:#94a3b8;'>"
-    "NEUROCHASE • ADAPTIVE AI MAZE • BUILT WITH PYTHON & STREAMLIT"
-    "</p>",
-    unsafe_allow_html=True,
+    """
+    <p style="
+        text-align:center;
+        color:#64748b;
+        font-weight:700;
+        letter-spacing:1px;
+    ">
+        NEUROCHASE • ADAPTIVE AI MAZE
+        • BUILT WITH PYTHON & STREAMLIT
+    </p>
+    """,
+    unsafe_allow_html=True
 )
